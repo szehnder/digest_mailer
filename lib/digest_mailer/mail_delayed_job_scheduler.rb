@@ -10,11 +10,11 @@ module DigestMailer
     end
     
     def self.user_has_pending_digest?(user)
-      (user.email_digests[:unsent].count>0)
+      (user.email_digests.where(:intended_sent_at => nil).count>0)
     end
     
     def get_pending_digest_for_user(user)
-      user.email_digests[:unsent]
+      user.email_digests.where(:intended_sent_at => nil)
     end
   end
 end

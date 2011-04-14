@@ -16,7 +16,7 @@ Gem::Specification.new do |s|
   s.rubyforge_project         = "digest_mailer"
 
   # If you need to check in files that aren't .rb files, add them here
-  s.files             = Dir.glob('{lib, spec}') +
+  s.files             = Dir.glob('{lib, spec, recipes}/**/*') +
                           %w(MIT-LICENSE README.textile)
   s.require_path      = ['lib']
   s.extra_rdoc_files  = 'README.textile'
