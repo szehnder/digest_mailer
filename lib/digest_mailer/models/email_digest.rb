@@ -10,7 +10,17 @@ class EmailDigest < ActiveRecord::Base
   before_create :grab_preferences_for_user
   
   def grab_preferences_for_user
-    self.digest_type DigestType.find_or_create_by_name(self.user.receive_frequency)
+    self.digest_type = DigestType.find_or_create_by_name(self.user.receive_frequency)
+    self.embargoed_until = EmailDigest.embargoed_until_by_digest_type(self.digest_type)
+  end
+  
+  def self.embargoed_until_by_digest_type(digest_type)
+    case digest_type.name
+    when 'daily'
+      Time.now.midnight
+    when 'weekly'
+      Time.next(:monday).beginning
+    end
   end
   
   def digest_body
@@ -49,3 +59,21 @@ class EmailDigest < ActiveRecord::Base
   end
   
 end
+
+class Time
+  class << self
+    def next(day, from = nil)
+      day = [:sunday,:monday,:tuesday,:wednesday,:thursday,:friday,:saturday].find_index(day) if day.class == Symbol
+      one_day = 60 * 60 * 24
+      original_date = from || now
+      result = original_date
+      result += one_day until result > original_date && result.wday == day 
+      result
+    end
+  end
+  
+  def beginning
+    Time.new(self.year, self.month, self.day)
+  end
+end
+

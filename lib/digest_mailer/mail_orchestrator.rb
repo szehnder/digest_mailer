@@ -9,7 +9,7 @@ module DigestMailer
       if (skip_user_preferences) #this would indicate the message should be sent immediately
         #enqueue this message for immediate delivery to all recipients
         if (recipients.count>0) 
-          email_message = EmailMessage.new(:from_email => from_email, :body => message_params[:body], :subject => message_params[:subject])#, :body_type => message_params[:body_type], :email_type => message_params[:email_type])
+          email_message = EmailMessage.create(:from_email => from_email, :body => message_params[:body], :subject => message_params[:subject])#, :body_type => message_params[:body_type], :email_type => message_params[:email_type])
           recipients.each do |r|
             msg = PendingMessage.new(r, email_message)
             MailDelayedJobScheduler.enqueue_message(msg)
@@ -18,15 +18,15 @@ module DigestMailer
       else
         recipients = separate_immediate_from_digest_recipients(recipients)
         #enqueue this message for immediate delivery to all immediate_recipients
+        email_message = EmailMessage.create(:from_email => from_email, :body => message_params[:body], :subject => message_params[:subject])#, :body_type => message_params[:body_type], :email_type => message_params[:email_type])
         if (recipients[:immediate].count>0)
-          email_message = EmailMessage.new(:from_email => from_email, :body => message_params[:body], :subject => message_params[:subject])#, :body_type => message_params[:body_type], :email_type => message_params[:email_type])
-          recipients.each do |r|
+          recipients[:immediate].each do |r|
             msg = PendingMessage.new(r, email_message)
             MailDelayedJobScheduler.enqueue_message(msg)
           end
         end
         #next, create and enqueue a digest message for each user who has requested a digest format
-        email_message = EmailMessage.new(:from_email => from_email, :body => message_params[:body], :subject => message_params[:subject])#, :body_type => message_params[:body_type], :email_type => message_params[:email_type])
+
         recipients[:digest].each do |u|
           if(MailDelayedJobScheduler.user_has_pending_digest?(u))
             digest = MailDelayedJobScheduler.get_pending_digest_for_user(u)
@@ -59,7 +59,7 @@ module DigestMailer
       recipients = []
       case message_params[:scope]
       when "by_user_id"
-        recipients << User.find(message_params[:id])
+        recipients = [User.find(message_params[:id])]
       when "by_project_id"
         recipients = Project.find(message_params[:id]).users
       when "by_all_users_with_idea_on_a_project"
@@ -121,6 +121,6 @@ module DigestMailer
         false
       end
     end
-    
+
   end
 end

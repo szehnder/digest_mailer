@@ -13,18 +13,33 @@ describe EmailDigest do
     it { @daily.id.should_not be_nil }
     it { @weekly.id.should_not be_nil }
     it { DigestType.count.should == 2 }
-    
-    pending "intended_sent_at should not be null"
-    pending "append_message should work properly"
+
+    it { @daily.digest_type.should_not be_nil }
+    it { @daily.embargoed_until.should_not be_nil }
 
   end
-  
+
   context "should be able to set it's frequency based on a user preference" do
-    before do
-      @user = Factory.create(:email_digest, :user => Factory(:daily_digest_user))
+    describe "daily digest" do
+      before do
+        @digest = Factory.create(:email_digest, :user => Factory(:daily_digest_user))
+      end
+
+      it { @digest.should_not be_nil }
+      it { @digest.id.should_not be_nil }
+      it { @digest.digest_type.should_not be_nil }
+      it { @digest.digest_type.name.should == "daily" }
     end
 
-    it { @user.should_not be_nil }
-    it { @user.id.should_not be_nil }
+    describe "weekly digest" do
+      before do
+        @digest = Factory.create(:email_digest, :user => Factory(:weekly_digest_user))
+      end
+
+      it { @digest.should_not be_nil }
+      it { @digest.id.should_not be_nil }
+      it { @digest.digest_type.should_not be_nil }
+      it { @digest.digest_type.name.should == "weekly" }
+    end
   end
 end

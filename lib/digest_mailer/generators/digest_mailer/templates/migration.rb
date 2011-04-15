@@ -12,6 +12,7 @@ class CreateDigestMailerTables < ActiveRecord::Migration
       t.references :user
       t.references :digest_type
       t.datetime :intended_sent_at
+      t.datetime :embargoed_until
       t.timestamps
     end
     

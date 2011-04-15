@@ -64,6 +64,7 @@ ActiveRecord::Schema.define do
     t.references :user
     t.references :digest_type
     t.datetime :intended_sent_at
+    t.datetime :embargoed_until
     t.timestamps
   end
   
@@ -196,7 +197,6 @@ class User < ActiveRecord::Base
   has_many :memberships
   has_many :projects, :through => :memberships, :source => :memberable, :source_type => 'Project'
 
-
 end
 
 class Role < ActiveRecord::Base
@@ -229,6 +229,7 @@ ActiveSupport::Dependencies.autoload_paths << File.dirname(__FILE__)
 
 # Add this to simulate Railtie initializer being executed
 #ActionMailer::Base.send(:extend, Delayed::DelayMail)
+
 require 'digest_mailer'
-Dir[File.dirname(__FILE__)+"/../lib/digest_mailer/models/*.rb"].each {|file| require file }
+
 Dir[File.dirname(__FILE__)+"/factories/*.rb"].each {|file| require file }

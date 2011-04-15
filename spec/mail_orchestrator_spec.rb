@@ -10,11 +10,11 @@ describe DigestMailer::MailOrchestrator do
     @d1 = Factory.create(:user, :discipline_id => 1, :roles => [@standard_role], :receive_frequency => 'immediately')          
     @d2 = Factory.create(:user, :discipline_id => 2, :roles => [@standard_role], :receive_frequency => 'immediately')          
     @d3 = Factory.create(:user, :discipline_id => 3, :roles => [@standard_role], :receive_frequency => 'daily')     
-    @d4 = Factory.create(:user, :discipline_id => 4, :roles => [@standard_role], :receive_frequency => 'daily')     
+    @d4 = Factory.create(:user, :discipline_id => 4, :roles => [@standard_role], :receive_frequency => 'weekly')     
     @d4_2 = Factory.create(:user, :discipline_id => 4, :roles => [@standard_role], :receive_frequency => 'weekly')
     @d5 = Factory.create(:user, :discipline_id => 5, :roles => [@standard_role], :receive_frequency => 'daily')
 
-    @cd = Factory.create(:creative_director_user, :discipline_id => 1, :roles => [@standard_role], :receive_frequency => 'immediately')
+    @cd = Factory.create(:creative_director_user, :discipline_id => 1, :roles => [@cd_role], :receive_frequency => 'immediately')
 
     @project = Factory.create(:project)
 
@@ -128,66 +128,132 @@ describe DigestMailer::MailOrchestrator do
     end
   end
 
-  describe "by_all_users" do
-    before do
-      DigestMailer::MailOrchestrator.prepare({:scope => "by_all_users"})
-    end
-    it { User.count.should == 7 }
-    it { EmailDigest.count.should == 4 }
-    it { EmailMessage.count.should == 1 }
-    pending "delayed job should be correct for the by_all_users scope" do
-      Delayed::Job.count.should == 7 
-    end
-  end
-
-  describe "by_all_users_with_idea_on_a_project" do
-    before do 
-      @idea = Factory.create(:idea, :user => @d1, :project => @project)
-      @idea2 = Factory.create(:idea, :user => @d2, :project => @project)
-      DigestMailer::MailOrchestrator.prepare({:scope =>'by_all_users_with_idea_on_a_project', :id => @project.id})
-    end
-
-    it { @project.id.should > 0 }
-    it { @project.users.count == 2 }
-    it { EmailDigest.count.should == 0 } #because the scope says to skip user preferences
-    it { EmailMessage.count.should == 0 } #because it doesn't keep around an email message (at hte moment) unless it's used in a digest
-    it "should enqueue the proper number of delayed jobs" do 
-      Delayed::Job.count.should == 2
-    end
-  end
-
-
-  describe "by_project_id" do
-    before do 
-      Factory.create(:membership, :memberable => @project, :user => @d5) 
-      DigestMailer::MailOrchestrator.prepare({:scope =>'by_project_id', :id => @project.id})
-    end
-    it { @project.users.count == 3 }
-    it { EmailDigest.count.should == 0 } #because the scope says to skip user preferences
-    it { EmailMessage.count.should == 0 } #because it doesn't keep around an email message (at hte moment) unless it's used in a digest
-    it "should enqueue the proper number of delayed jobs" do 
-      Delayed::Job.count.should == 3
-    end
-  end
-
-  describe "by_discipline_id" do
-    describe "should recognize that discipline 4 has 2 users in it" do
-      before do
-          DigestMailer::MailOrchestrator.prepare({:scope =>'by_discipline_id', :id => 4})
+  context "API Testing" do
+  
+    
+    context "by_user_id" do
+      describe "regular user" do
+        before do
+          DigestMailer::MailOrchestrator.prepare({:scope => "by_user_id", :id => @cd.id})
+        end
+        it { EmailDigest.count.should == 0 }
+        it { EmailMessage.count.should == 1 }
+        it { Delayed::Job.count.should == 1 }
       end
-      it { EmailDigest.count.should == 0 } #because the scope says to skip user preferences
-      it { EmailMessage.count.should == 0 } #because it doesn't keep around an email message (at hte moment) unless it's used in a digest
-      it { Delayed::Job.count.should == 2 }
+      describe "daily digest user" do
+        before do
+          DigestMailer::MailOrchestrator.prepare({:scope => "by_user_id", :id => @d3.id})
+        end
+        it { EmailDigest.count.should == 1 }
+        it { EmailMessage.count.should == 1 }
+        it { Delayed::Job.count.should == 1 }
+      end 
+      describe "weekly digest user" do
+        before do
+          DigestMailer::MailOrchestrator.prepare({:scope => "by_user_id", :id => @d4.id})
+        end
+        it { EmailDigest.count.should == 1 }
+        it { EmailMessage.count.should == 1 }
+        it { Delayed::Job.count.should == 1 }
+      end
     end
     
-    describe "should recognize that discipline 2 has 1 user in it" do
-      before do
-          DigestMailer::MailOrchestrator.prepare({:scope =>'by_discipline_id', :id => 2})
-      end
-      it { EmailDigest.count.should == 0 } #because the scope says to skip user preferences
-      it { EmailMessage.count.should == 0 } #because it doesn't keep around an email message (at hte moment) unless it's used in a digest
-      it { Delayed::Job.count.should == 1 }
+    describe "by_user_array" do
+        before do
+          DigestMailer::MailOrchestrator.prepare({:scope => "by_user_array", :user_recipients => @all_users})
+        end
+        it { @all_users.length.should == 6 }
+        it { User.count.should == 7 }
+        it { EmailDigest.count.should == 4 }
+        it { EmailMessage.count.should == 1 }
+        it { Delayed::Job.count.should == 6 }
     end
+    
+    describe "by_invite_user_id" do
+        before do
+          DigestMailer::MailOrchestrator.prepare({:scope => "by_invite_user_id", :id => @d1.id})
+        end
+        it { EmailDigest.count.should == 0 }
+        it { EmailMessage.count.should == 1 }
+        it { Delayed::Job.count.should == 1 }
+    end
+    
+    describe "by_all_users" do
+      before do
+        DigestMailer::MailOrchestrator.prepare({:scope => "by_all_users"})
+      end
+      it { User.count.should == 7 }
+      it { EmailDigest.count.should == 4 }
+      it { EmailMessage.count.should == 1 }
+      it { Delayed::Job.count.should == 7 }
+    end
+
+    describe "by_all_users_with_idea_on_a_project" do
+      before do 
+        @idea = Factory.create(:idea, :user => @d1, :project => @project)
+        @idea2 = Factory.create(:idea, :user => @d2, :project => @project)
+        DigestMailer::MailOrchestrator.prepare({:scope =>'by_all_users_with_idea_on_a_project', :id => @project.id})
+      end
+
+      it { @project.id.should > 0 }
+      it { @project.users.count.should == 2 }
+      it { EmailDigest.count.should == 0 } #because the scope says to skip user preferences
+      it { EmailMessage.count.should == 1 } 
+      it { Delayed::Job.count.should == 2 }
+    end
+
+
+    describe "by_project_id" do
+      before do 
+        Factory.create(:membership, :memberable => @project, :user => @d5) 
+        DigestMailer::MailOrchestrator.prepare({:scope =>'by_project_id', :id => @project.id})
+      end
+      it { @project.users.count == 3 }
+      it { EmailDigest.count.should == 0 } #because the scope says to skip user preferences
+      it { EmailMessage.count.should == 1 } 
+      it { Delayed::Job.count.should == 3 }
+    end
+
+    describe "by_discipline_id" do
+      describe "should recognize that discipline 4 has 2 users in it" do
+        before do
+          DigestMailer::MailOrchestrator.prepare({:scope =>'by_discipline_id', :id => 4})
+        end
+        it { EmailDigest.count.should == 0 } #because the scope says to skip user preferences
+        it { EmailMessage.count.should == 1 }
+        it { Delayed::Job.count.should == 2 }
+      end
+
+      describe "should recognize that discipline 2 has 1 user in it" do
+        before do
+          DigestMailer::MailOrchestrator.prepare({:scope =>'by_discipline_id', :id => 2})
+        end
+        it { EmailDigest.count.should == 0 } #because the scope says to skip user preferences
+        it { EmailMessage.count.should == 1 }
+        it { Delayed::Job.count.should == 1 }
+      end
+    end
+
+    describe "by_all_users_with_idea" do
+      before do 
+        Factory.create(:idea, :user => @d1, :project => @project)
+        Factory.create(:idea, :user => @d2, :project => @project)
+        Factory.create(:idea, :user => @d3, :project => @project)
+        Factory.create(:idea, :user => @d4, :project => @project)
+        Factory.create(:idea, :user => @d4_2, :project => @project)
+        DigestMailer::MailOrchestrator.prepare({:scope =>'by_all_users_with_idea'})
+      end
+      it { Idea.count.should > 0 }
+      it { @project.users.count == 5 }
+      it { EmailDigest.count.should == 0 } #because the scope says to skip user preferences
+      it { EmailMessage.count.should == 1 }
+      it "should enqueue the proper number of delayed jobs" do 
+        Delayed::Job.count.should == 5
+      end
+    end
+
   end
+
+  pending "sending multiple emails to a digest user should queue them up without adding to the number delayed_jobs or email_digests"
 
 end
