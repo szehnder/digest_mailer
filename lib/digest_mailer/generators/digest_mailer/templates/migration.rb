@@ -10,12 +10,7 @@ class CreateDigestMailerTables < ActiveRecord::Migration
     
     create_table :email_digests do |t|
       t.references :user
-      t.string :to
-      t.string :frequency
-      t.text :body_plain
-      t.text :body_html
-      t.string :from
-      t.string :subject
+      t.references :digest_type
       t.datetime :intended_sent_at
       t.timestamps
     end
@@ -33,6 +28,10 @@ class CreateDigestMailerTables < ActiveRecord::Migration
       t.references :email_digest
       t.references :email_message
     end
+    
+    create_table :digest_types, :force => true do |t|
+      t.string :name
+    end
   end
 
   def self.down
@@ -40,5 +39,7 @@ class CreateDigestMailerTables < ActiveRecord::Migration
     drop_table :email_digests
     drop_table :email_messages
     drop_table :email_digests_email_messages
+    drop_table :digest_types
   end
+  
 end

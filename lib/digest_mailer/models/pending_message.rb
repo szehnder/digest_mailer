@@ -11,7 +11,7 @@ module DigestMailer
       end
 
       # send the message to the queue for delivery
-      def send
+      def send_message
         MailDispatcher.send(@mailer_method, @recipient, self)
         MailLogger.log(self)
       end

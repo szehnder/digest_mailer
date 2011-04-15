@@ -12,7 +12,7 @@ require 'action_mailer'
 require 'factory_girl'
 require 'delayed_job'
 require 'database_cleaner'
-require 'digest_mailer'
+require 'shoulda'
 
 RSpec.configure do |config|
   config.before(:suite) do
@@ -28,12 +28,9 @@ RSpec.configure do |config|
     DatabaseCleaner.clean
   end
 end
-
+ 
 #DigestMailer::MailOrchestrator.logger = Logger.new('/tmp/digest_mailer.log')
 ENV['RAILS_ENV'] = 'test'
-
-Dir[File.dirname(__FILE__)+"/../lib/models/*.rb"].each {|file| require file }
-Dir[File.dirname(__FILE__)+"/factories/*.rb"].each {|file| require file }
 
 config = YAML.load(File.read('spec/database.yml'))
 ActiveRecord::Base.configurations = {'test' => config['mysql2']}
@@ -65,14 +62,13 @@ ActiveRecord::Schema.define do
 
   create_table :email_digests, :force => true do |t|
     t.references :user
-    t.string :to
-    t.string :frequency
-    t.text :body_plain
-    t.text :body_html
-    t.string :from
-    t.string :subject
+    t.references :digest_type
     t.datetime :intended_sent_at
     t.timestamps
+  end
+  
+  create_table :digest_types, :force => true do |t|
+    t.string :name
   end
 
   create_table :email_messages, :force => true do |t|
@@ -179,16 +175,27 @@ ActiveRecord::Schema.define do
     t.text     :explanation
     t.string   :state
   end
+  
+  create_table :memberships, :id => false, :force => true do |t|
+    t.references :role
+    t.references :user
+    t.references :memberable, :polymorphic => true
+  end
 end
 
 
 class User < ActiveRecord::Base
   has_and_belongs_to_many :roles
   has_many :email_digests
+  has_many :ideas
   attr_accessible :first_name, :last_name, :email, :email_confirmation, :password, :password_confirmation, :remember_me, :city, :state, :zip_code,
   :country, :gender, :birth_day, :years_of_experience, :message, :receive_frequency, :nickname, :discipline_id,
   :is_employed, :registration_source, :avatar_file_name, :avatar_content_type, :avatar_file_size, :avatar_updated_at,
   :title, :current_employer, :receive_notifications, :employer_ids, :work_links_attributes, :employers_attributes, :employers_attributes, :avatar, :portfolios, :admin_note, :entity_id, :registration_source, :twitter, :contract_ids, :role_ids
+
+  has_many :memberships
+  has_many :projects, :through => :memberships, :source => :memberable, :source_type => 'Project'
+
 
 end
 
@@ -198,11 +205,22 @@ end
 
 class Project < ActiveRecord::Base
   has_many :ideas
+  has_many :memberships, :as => :memberable
+  has_many :users, :through => :memberships
 end
 
 class Idea < ActiveRecord::Base
   belongs_to :project
+  belongs_to :user
 end
+
+class Membership < ActiveRecord::Base
+  belongs_to :memberable, :polymorphic => true
+
+  belongs_to :user
+  belongs_to :role  
+end
+
 
 Delayed::Worker.backend = :active_record
 
@@ -211,3 +229,6 @@ ActiveSupport::Dependencies.autoload_paths << File.dirname(__FILE__)
 
 # Add this to simulate Railtie initializer being executed
 #ActionMailer::Base.send(:extend, Delayed::DelayMail)
+require 'digest_mailer'
+Dir[File.dirname(__FILE__)+"/../lib/digest_mailer/models/*.rb"].each {|file| require file }
+Dir[File.dirname(__FILE__)+"/factories/*.rb"].each {|file| require file }

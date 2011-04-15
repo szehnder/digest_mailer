@@ -39,7 +39,7 @@ module DigestMailer
     end
 
     # Used for admin messages and anything generic
-    def self.generic_message(msg, recipient)
+    def self.generic_message(recipient, msg)
       @msg = msg
       mail(:to => recipient, :from => msg[:from_email], :subject => msg[:subject])
     end

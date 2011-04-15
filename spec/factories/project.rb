@@ -10,10 +10,10 @@ Factory.define :project, :default_strategy => :build do |project|
   project.start_at { Time.now - 2.days }
   project.end_at { Time.now + 20.days }
   project.required_creative_count 300
-  project.private true
+#  project.private true
 end
 
-Factory.define :public_project, :default_strategy => :build do |project|
+Factory.define :public_project, :default_strategy => :build, :class => 'Project' do |project|
   project.title "This is a title"
   project.content "This is the content"
   project.award "This is the award"
@@ -25,5 +25,5 @@ Factory.define :public_project, :default_strategy => :build do |project|
   project.start_at { Time.now - 2.days }
   project.end_at { Time.now + 20.days }
   project.required_creative_count 300
-  project.private false
+ # project.private false
 end

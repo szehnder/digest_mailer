@@ -1,17 +1,19 @@
 module DigestMailer
   class MailOrchestrator
 
-    def self.prepare(message_params, other_recipients, from_email = "Victors & Spoils <noreply@victorsandspoils.com>")
+    def self.prepare(message_params, other_recipients = [], from_email = "Victors & Spoils <noreply@victorsandspoils.com>")
       message_params[:other_recipients] = other_recipients
-      scope = (message_params[:scope].to_s.include? "|") ? message_params[:scope].to_s.split("|")[0] : message_params[:scope] 
-      skip_user_preferences = should_skip_user_preferences_by_scope(scope)
-      recipients = recipients_by_scope(scope, message_params)
+      skip_user_preferences = should_skip_user_preferences_by_scope(message_params[:scope])
+      recipients = recipients_by_scope(message_params)
 
       if (skip_user_preferences) #this would indicate the message should be sent immediately
         #enqueue this message for immediate delivery to all recipients
         if (recipients.count>0) 
-          email_message = EmailMessage.new(:recipients => recipients, :from_email => from_email, :message_params => message_params)
-          MailDelayedJobScheduler.enqueue_message(email_message)
+          email_message = EmailMessage.new(:from_email => from_email, :body => message_params[:body], :subject => message_params[:subject])#, :body_type => message_params[:body_type], :email_type => message_params[:email_type])
+          recipients.each do |r|
+            msg = PendingMessage.new(r, email_message)
+            MailDelayedJobScheduler.enqueue_message(msg)
+          end
         end
       else
         recipients = separate_immediate_from_digest_recipients(recipients)
@@ -24,8 +26,8 @@ module DigestMailer
           end
         end
         #next, create and enqueue a digest message for each user who has requested a digest format
+        email_message = EmailMessage.new(:from_email => from_email, :body => message_params[:body], :subject => message_params[:subject])#, :body_type => message_params[:body_type], :email_type => message_params[:email_type])
         recipients[:digest].each do |u|
-          email_message = EmailMessage.new(:from_email => from_email, :body => message_params[:body], :subject => message_params[:subject])#, :body_type => message_params[:body_type], :email_type => message_params[:email_type])
           if(MailDelayedJobScheduler.user_has_pending_digest?(u))
             digest = MailDelayedJobScheduler.get_pending_digest_for_user(u)
             digest.append_message(email_message)
@@ -53,22 +55,23 @@ module DigestMailer
     end
 
     #Prepares an array of users to receive this email based on the email's designated scope
-    def self.recipients_by_scope(scope, message_params)
+    def self.recipients_by_scope(message_params)
       recipients = []
-      case scope
+      case message_params[:scope]
       when "by_user_id"
-        recipients << message_params[:id]
+        recipients << User.find(message_params[:id])
       when "by_project_id"
-        Project.find(id).ideas.find(:all, :select => "DISTINCT user_id").each do |idea|
+        recipients = Project.find(message_params[:id]).users
+      when "by_all_users_with_idea_on_a_project"
+        Project.find(message_params[:id]).ideas.find(:all, :select => "DISTINCT user_id").each do |idea|
           recipients << idea.user_id
         end
       when "by_user_array"
-        recipients = message_params[:other_recipients]
+        recipients = message_params[:user_recipients]
       when "by_all_users"
         recipients = User.all
       when "by_discipline_id"
-        discipline_id = (message_params[:scope].to_s.include? "|") ? message_params[:scope].to_s.split("|")[1] : nil
-        User.find(:all, :conditions => "discipline_id = #{discipline_id}").each do |user|
+        User.find(:all, :conditions => "discipline_id = #{message_params[:id]}").each do |user|
           recipients << user.id
         end
       when 'by_invite_user_id'
@@ -91,6 +94,8 @@ module DigestMailer
       when "by_all_users"
         false
       when "by_project_id"
+        true
+      when "by_all_users_with_idea_on_a_project"
         true
       when "by_discipline_id"
         true
