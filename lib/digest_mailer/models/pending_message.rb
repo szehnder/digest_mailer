@@ -1,6 +1,6 @@
 module DigestMailer
-  class PendingMessage < Struct.new(:recipient, :message, :mailer_method, :intended_sent_at)
-    cattr_accessor :recipient, :message, :mailer_method, :intended_sent_at
+  class PendingMessage < Struct.new(:recipient, :message, :intended_sent_at, :mailer_method)
+    attr_accessor :recipient, :message, :mailer_method, :intended_sent_at
     
       def perform
         @recipient = recipient

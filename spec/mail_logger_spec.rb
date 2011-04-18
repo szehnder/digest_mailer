@@ -5,22 +5,35 @@ require 'digest_mailer/models/pending_message'
 describe DigestMailer::MailLogger do
   describe "log" do
     before do
-      @to = Factory(:user)
-      @cd = Factory(:creative_director_user)
-      @from = Factory(:admin)
-      @message = DigestMailer::PendingMessage.new(@to, Factory(:plain_email))
-      @message2 = DigestMailer::PendingMessage.new(@cd, Factory(:html_email))
+      @to = Factory.create(:user)
+      @cd = Factory.create(:creative_director_user)
+      @from = Factory.create(:admin)
+      @email1 = Factory.create(:plain_email)
+      @email2 = Factory.create(:html_email)
+      @message1 = DigestMailer::PendingMessage.new(@to, @email1, Time.now, 'generic_mailer')
+      @message2 = DigestMailer::PendingMessage.new(@cd, @email2, Time.now, 'generic_mailer')
     end
-       
-    it "should persist a new row in the EmailLog tbl" do
-        lambda {
-           @log = DigestMailer::MailLogger.log(@message)
-         }.should change { EmailLog.count }.by(1)
-    end
+    
+    it { @to.should_not be_nil }
+    it { @email1.should_not be_nil }
+    it { @email2.should_not be_nil }
+    it { @message1[:recipient].should_not be_nil }
+    it { @message1[:recipient].id.should > 0 }
+    it { @message1[:message].should_not be_nil }
+    it { @message1[:message].id.should > 0 }
+    it { @message1[:intended_sent_at].should_not be_nil }
+    it { @message1[:mailer_method].should_not be_nil }
+    
+    
+     it "should persist 1 rows in the EmailLog tbl" do
+          lambda {
+            DigestMailer::MailLogger.log(@message1)
+           }.should change { EmailLog.count }.by(1)
+      end
     
     it "should persist 2 rows in the EmailLog tbl" do
         lambda {
-          DigestMailer::MailLogger.log(@message)
+          DigestMailer::MailLogger.log(@message1)
           DigestMailer::MailLogger.log(@message2)
          }.should change { EmailLog.count }.by(2)
     end

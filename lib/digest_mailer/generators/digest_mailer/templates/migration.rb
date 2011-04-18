@@ -5,6 +5,7 @@ class CreateDigestMailerTables < ActiveRecord::Migration
       t.integer :recipient_id
       t.references :email_message
       t.datetime :intended_sent_at
+      t.string :mailer_method
       t.timestamps
     end
     

@@ -2,7 +2,7 @@ class EmailDigest < ActiveRecord::Base
   belongs_to :user
   belongs_to :digest_type
   has_and_belongs_to_many :email_messages
-  #validates_presence_of :digest_type
+  validates_presence_of :user
   
   #scope :frequency, lambda { |*args| {:conditions => ["frequency = ?", (args.first || 'weekly')]} }
   #scope :unsent, lambda {|*args| {:conditions => "intended_sent_at=null", :limit => 1}}
@@ -10,7 +10,7 @@ class EmailDigest < ActiveRecord::Base
   before_create :grab_preferences_for_user
   
   def grab_preferences_for_user
-    self.digest_type = DigestType.find_or_create_by_name(self.user.receive_frequency)
+    self.digest_type = DigestType.find_or_create_by_name(self.user.receive_frequency) if (!self.digest_type)
     self.embargoed_until = EmailDigest.embargoed_until_by_digest_type(self.digest_type)
   end
   
@@ -46,7 +46,7 @@ class EmailDigest < ActiveRecord::Base
     email_message = EmailMessage.new(:from_email => "mailer@victorsandspoils.com", 
                                       :body => construct_message_body(), 
                                       :subject => "#{digest_type} Digest from Victors & Spoils")
-    PendingMessage.new(user, email_message)
+    PendingMessage.new(self.user, self.email_message, Time.now, 'generic_message')
   end
   
   def construct_message_body()

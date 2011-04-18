@@ -12,7 +12,7 @@ require 'action_mailer'
 require 'factory_girl'
 require 'delayed_job'
 require 'database_cleaner'
-require 'shoulda'
+require 'shoulda' 
 
 RSpec.configure do |config|
   config.before(:suite) do
@@ -35,8 +35,10 @@ ENV['RAILS_ENV'] = 'test'
 config = YAML.load(File.read('spec/database.yml'))
 ActiveRecord::Base.configurations = {'test' => config['mysql2']}
 ActiveRecord::Base.establish_connection
-ActiveRecord::Base.logger = Rails.logger
+
 ActiveRecord::Migration.verbose = false
+Rails.logger = Logger.new(STDOUT)
+ActiveRecord::Base.logger = Logger.new(File.open('log/digest_mailer_activerecord.log', 'w'))
 
 ActiveRecord::Schema.define do
   create_table :delayed_jobs, :force => true do |table|
@@ -57,6 +59,7 @@ ActiveRecord::Schema.define do
     t.integer :recipient_id
     t.references :email_message
     t.datetime :intended_sent_at
+    t.string :mailer_method
     t.timestamps
   end
 

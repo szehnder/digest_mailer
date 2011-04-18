@@ -1,4 +1,7 @@
 class EmailLog < ActiveRecord::Base
-  attr_accessible :body_html, :body_plain, :from, :to, :subject, :user_id, :intended_sent_at
   belongs_to :email_message
+  validates_presence_of :recipient_id
+  validates_presence_of :mailer_method
+  validates_presence_of :email_message
+  validates_presence_of :intended_sent_at
 end

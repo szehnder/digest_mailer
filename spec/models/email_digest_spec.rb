@@ -16,6 +16,9 @@ describe EmailDigest do
 
     it { @daily.digest_type.should_not be_nil }
     it { @daily.embargoed_until.should_not be_nil }
+        
+    it { @weekly.digest_type.should_not be_nil }
+    it { @weekly.embargoed_until.should_not be_nil }
 
   end
 
@@ -28,7 +31,8 @@ describe EmailDigest do
       it { @digest.should_not be_nil }
       it { @digest.id.should_not be_nil }
       it { @digest.digest_type.should_not be_nil }
-      it { @digest.digest_type.name.should == "daily" }
+      it { @digest.digest_type.name.should == 'daily' }
+      it { @digest.embargoed_until.should_not be_nil }
     end
 
     describe "weekly digest" do
@@ -39,7 +43,8 @@ describe EmailDigest do
       it { @digest.should_not be_nil }
       it { @digest.id.should_not be_nil }
       it { @digest.digest_type.should_not be_nil }
-      it { @digest.digest_type.name.should == "weekly" }
+      it { @digest.digest_type.name.should == 'weekly' }
+      it { @digest.embargoed_until.should_not be_nil }
     end
   end
 end
