@@ -1,3 +1,4 @@
+require_relative 'email_message'
 class EmailDigest < ActiveRecord::Base
   belongs_to :user
   belongs_to :digest_type
@@ -76,4 +77,3 @@ class Time
     Time.new(self.year, self.month, self.day)
   end
 end
-
