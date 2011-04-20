@@ -236,3 +236,12 @@ ActiveSupport::Dependencies.autoload_paths << File.dirname(__FILE__)
 require 'digest_mailer'
 
 Dir[File.dirname(__FILE__)+"/factories/*.rb"].each {|file| require file }
+
+module DelayedJobSpecHelper
+  def work_off
+    Delayed::Job.all.each do |job|
+      job.payload_object.perform
+      job.destroy
+    end
+  end
+end

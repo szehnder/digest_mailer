@@ -41,9 +41,10 @@ module DigestMailer
     # Used for admin messages and anything generic
     def self.generic_message(recipient, msg)
       @msg = msg
-      mail(:to => recipient, :from => msg[:from_email], :subject => msg[:subject])
+      #mail(:to => recipient, :from => msg[:from_email], :subject => msg[:subject])
+      Rails.logger.info("[Mailer] To: #{recipient}\rFrom: #{msg[:from_email]}\rSubject: #{msg[:subject]}\r\rBody: #{msg[:body]}")
     end
-
+    
     # used for digest emails
     def self.digest_message(msg)
       @msg = msg
