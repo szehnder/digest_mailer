@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe EmailLog do
     it { should belong_to :email_message }
-    it { should validate_presence_of :recipient_id }
+    it { should validate_presence_of :recipient_email }
     it { should validate_presence_of :intended_sent_at }
     it { should validate_presence_of :mailer_method }
 

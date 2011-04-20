@@ -38,22 +38,25 @@ class EmailDigest < ActiveRecord::Base
   
   def send_message
     msg = build_digest_message()
-    
-    MailDispatcher.send(@mailer_method, self.user, msg)
-    MailLogger.log(msg)
+    self.intended_sent_at = Time.now
+    self.save
+    msg.send_message
   end
   
   def build_digest_message() 
+    msg_body = construct_message_body()
     email_message = EmailMessage.new(:from_email => "mailer@victorsandspoils.com", 
-                                      :body => construct_message_body(), 
-                                      :subject => "#{digest_type} Digest from Victors & Spoils")
-    PendingMessage.new(self.user, self.email_message, Time.now, 'generic_message')
+                                      :body => msg_body, 
+                                      :subject => "#{digest_type.name.capitalize} Digest from Victors & Spoils", :body_type => 'plain', :email_type => 'digest', :collation_type => "#{digest_type}")
+    DigestMailer::PendingMessage.new(self.user, email_message, Time.now, 'generic_message')
   end
   
   def construct_message_body()
     body = ""
+#    @sent_at_hash = Hash.new if !@sent_at_hash
     self.email_messages.each do |msg|
-      body += "------------\r" if body!=""
+ #     @sent_at_hash[msg] = Time.now if !@sent_at_hash[msg]
+      body += "\r------------\r"
       body += msg.to_digest_fragment
     end
     body

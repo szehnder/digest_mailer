@@ -13,6 +13,38 @@ Factory.define :user, :default_strategy => :build do |user|
   user.birth_day "1978-08-14 00:00:00"
 end
 
+Factory.define :szehnder1, :default_strategy => :build, :class => 'User' do |user|
+  user.email 'seanzehnder@gmail.com'
+  user.first_name "Sean1"
+  user.last_name "Zehnder"
+  user.discipline_id 1
+  user.confirmed_at Time.new.to_s
+  user.confirmation_sent_at Time.new.to_s
+  user.city "Boulder"
+  user.state "CO"
+  user.country "USA"
+  user.zip_code "80302"
+  user.years_of_experience "2 - 4 years"
+  user.birth_day "1978-08-14 00:00:00"
+  user.receive_frequency 'daily'
+end
+
+Factory.define :szehnder2, :default_strategy => :build, :class => 'User' do |user|
+  user.email 'sean@socialesque.com'
+  user.first_name "Sean2"
+  user.last_name "Zehnder"
+  user.discipline_id 1
+  user.confirmed_at Time.new.to_s
+  user.confirmation_sent_at Time.new.to_s
+  user.city "Boulder"
+  user.state "CO"
+  user.country "USA"
+  user.zip_code "80302"
+  user.years_of_experience "2 - 4 years"
+  user.birth_day "1978-08-14 00:00:00"
+  user.receive_frequency 'daily'
+end
+
 Factory.define :daily_digest_user, :default_strategy => :build, :class => 'User' do |user|
   user.sequence(:email) {|n| "info#{n}@victorsandspoils.com"}
   user.first_name "General"

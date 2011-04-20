@@ -37,7 +37,7 @@ ActiveRecord::Base.configurations = {'test' => config['mysql2']}
 ActiveRecord::Base.establish_connection
 
 ActiveRecord::Migration.verbose = false
-Rails.logger = Logger.new(STDOUT)
+Rails.logger = Logger.new(File.open('log/digest_mailer_test.log', 'w'))
 ActiveRecord::Base.logger = Logger.new(File.open('log/digest_mailer_activerecord.log', 'w'))
 
 ActiveRecord::Schema.define do
@@ -57,6 +57,7 @@ ActiveRecord::Schema.define do
 
   create_table :email_logs, :force => true do |t|
     t.integer :recipient_id
+    t.string :recipient_email
     t.references :email_message
     t.datetime :intended_sent_at
     t.string :mailer_method
@@ -82,6 +83,7 @@ ActiveRecord::Schema.define do
     t.string :subject
     t.string :collation_type #individual, daily_digest, weekly_digest
     t.string :email_type #this will be the name of the email method, such as 'generic_message'
+    t.datetime :intended_sent_at #optional - only really used when the email is being packaged in a digest
   end
 
   create_table :email_digests_email_messages, :force => true, :id => false do |t|

@@ -39,10 +39,11 @@ module DigestMailer
     end
 
     # Used for admin messages and anything generic
-    def self.generic_message(recipient, msg)
-      @msg = msg
-      #mail(:to => recipient, :from => msg[:from_email], :subject => msg[:subject])
-      Rails.logger.info("[Mailer] To: #{recipient}\rFrom: #{msg[:from_email]}\rSubject: #{msg[:subject]}\r\rBody: #{msg[:body]}")
+    def generic_message(recipient_email, msg)
+      @body = msg[:body]
+        mail(:to => recipient_email, :from => msg[:from_email], :subject => msg[:subject])
+        MailLogger.log(recipient_email, msg, 'generic_message', msg[:intended_sent_at])
+       # Rails.logger.info("[Mailer Example]\r\rTo: #{recipient_email}\rFrom: #{msg[:from_email]}\rSubject: #{msg[:subject]}\r#{msg[:body]}")
     end
     
     # used for digest emails
@@ -54,7 +55,7 @@ module DigestMailer
     # Sends email when users who have been imported into the new site from the old
     def self.invite_legacy_user_message(user)
       @user = user
-      mail(:to => user.email, :subject => "Update your V&S Account")
+      DigestMailer::MailDispatcher.mail(:to => user.email, :subject => "Update your V&S Account")
     end
     
   end

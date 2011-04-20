@@ -1,9 +1,9 @@
 module DigestMailer
   class MailLogger
     
-    def self.log(msg)
-      EmailLog.create(:recipient_id => msg[:recipient][:id], :email_message_id => msg[:message][:id], 
-                        :mailer_method => msg[:mailer_method], :intended_sent_at => msg[:intended_sent_at])
+    def self.log(recipient, email_message, mailer_method, intended_sent_at)
+      EmailLog.create(:recipient_email => recipient, :email_message_id => email_message.id, 
+                        :mailer_method => mailer_method, :intended_sent_at => intended_sent_at)
     end
   end
 end

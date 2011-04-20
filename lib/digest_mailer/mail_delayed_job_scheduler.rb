@@ -13,8 +13,8 @@ module DigestMailer
       (user.email_digests.where(:intended_sent_at => nil).count>0)
     end
     
-    def get_pending_digest_for_user(user)
-      user.email_digests.where(:intended_sent_at => nil)
+    def self.get_pending_digest_for_user(user)
+      user.email_digests.where(:intended_sent_at => nil).first
     end
   end
 end

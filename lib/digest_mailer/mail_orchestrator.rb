@@ -1,27 +1,36 @@
+require_relative 'models/non_user_recipient'
 module DigestMailer
   class MailOrchestrator
-
+    
     def self.prepare(message_params, other_recipients = [], from_email = "Victors & Spoils <noreply@victorsandspoils.com>")
-      message_params[:other_recipients] = other_recipients
+      #message_params[:other_recipients] = other_recipients
       skip_user_preferences = should_skip_user_preferences_by_scope(message_params[:scope])
       recipients = recipients_by_scope(message_params)
+      email_message = EmailMessage.create(:from_email => from_email, :body => message_params[:body], :subject => message_params[:subject], :body_type => 'plain', :intended_sent_at => Time.now)
+      
+      #send the email to all the write-in recipients
+      other_recipients.each do |recip|
+        if(recip!="")
+          msg = PendingMessage.new({:email => recip}, email_message, Time.now, 'generic_message')
+          MailDelayedJobScheduler.enqueue_message(msg)
+        end
+      end
 
       if (skip_user_preferences) #this would indicate the message should be sent immediately
         #enqueue this message for immediate delivery to all recipients
         if (recipients.count>0) 
-          email_message = EmailMessage.create(:from_email => from_email, :body => message_params[:body], :subject => message_params[:subject])#, :body_type => message_params[:body_type], :email_type => message_params[:email_type])
           recipients.each do |r|
-            msg = PendingMessage.new(r, email_message)
+            msg = PendingMessage.new(r, email_message, Time.now, 'generic_message')
             MailDelayedJobScheduler.enqueue_message(msg)
           end
         end
       else
         recipients = separate_immediate_from_digest_recipients(recipients)
         #enqueue this message for immediate delivery to all immediate_recipients
-        email_message = EmailMessage.create(:from_email => from_email, :body => message_params[:body], :subject => message_params[:subject])#, :body_type => message_params[:body_type], :email_type => message_params[:email_type])
+        #email_message = EmailMessage.create(:from_email => from_email, :body => message_params[:body], :subject => message_params[:subject], :body_type => 'plain', :intended_sent_at => Time.now)
         if (recipients[:immediate].count>0)
           recipients[:immediate].each do |r|
-            msg = PendingMessage.new(r, email_message)
+            msg = PendingMessage.new(r, email_message, Time.now, 'generic_message')
             MailDelayedJobScheduler.enqueue_message(msg)
           end
         end
@@ -31,7 +40,7 @@ module DigestMailer
           if(MailDelayedJobScheduler.user_has_pending_digest?(u))
             digest = MailDelayedJobScheduler.get_pending_digest_for_user(u)
             digest.append_message(email_message)
-            MailDelayedJobScheduler.enqueue_digest(digest)
+            #MailDelayedJobScheduler.enqueue_digest(digest)
           else
             digest = EmailDigest.create(:user => u)
             digest.append_message(email_message)
@@ -64,7 +73,7 @@ module DigestMailer
         recipients = Project.find(message_params[:id]).users
       when "by_all_users_with_idea_on_a_project"
         Project.find(message_params[:id]).ideas.find(:all, :select => "DISTINCT user_id").each do |idea|
-          recipients << idea.user_id
+          recipients << User.find(idea.user_id)
         end
       when "by_user_array"
         recipients = message_params[:user_recipients]
@@ -81,7 +90,7 @@ module DigestMailer
           recipients << idea.user_id
         end
       end
-      recipients + message_params[:other_recipients]
+      recipients# + message_params[:other_recipients]
     end
 
     #Determines whether or not this type of email should honor the user's preferred format (meaning 'immediate' or 'digest')
