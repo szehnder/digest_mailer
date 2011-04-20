@@ -11,5 +11,6 @@ autoload :EmailMessage, File.dirname(__FILE__) + '/digest_mailer/models/email_me
 require File.dirname(__FILE__) + '/digest_mailer/models/email_log'
 require File.dirname(__FILE__) + '/digest_mailer/models/digest_type'
 require File.dirname(__FILE__) + '/digest_mailer/models/pending_message'
+require File.dirname(__FILE__) + '/digest_mailer/models/non_user_recipient'
 
 #Dir[File.dirname(__FILE__)+"/digest_mailer/models/*.rb"].each {|file| require file }

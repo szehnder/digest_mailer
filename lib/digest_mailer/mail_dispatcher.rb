@@ -43,7 +43,7 @@ module DigestMailer
       @body = msg[:body]
         mail(:to => recipient_email, :from => msg[:from_email], :subject => msg[:subject])
         MailLogger.log(recipient_email, msg, 'generic_message', msg[:intended_sent_at])
-       # Rails.logger.info("[Mailer Example]\r\rTo: #{recipient_email}\rFrom: #{msg[:from_email]}\rSubject: #{msg[:subject]}\r#{msg[:body]}")
+        Rails.logger.info("[Mailer Example]\r\rTo: #{recipient_email}\rFrom: #{msg[:from_email]}\rSubject: #{msg[:subject]}\r#{msg[:body]}")
     end
     
     # used for digest emails

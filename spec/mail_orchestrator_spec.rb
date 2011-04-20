@@ -42,7 +42,7 @@ describe DigestMailer::MailOrchestrator do
 
   describe "recipients_by_scope" do 
     before(:all) do
-      @message_params = {:other_recipients => ['szehnder@victorsandspoils.com']}
+      @message_params = {:other_recipients => ['szehnder@victorsandspoils.com'], :body => 'This message has a body.'}
       @idea = Factory.create(:idea, :user => @d1, :project => @project)
       @idea2 = Factory.create(:idea, :user => @d2, :project => @project)
     end
@@ -179,7 +179,7 @@ describe DigestMailer::MailOrchestrator do
     
     describe "by_invite_user_id" do
         before do
-          DigestMailer::MailOrchestrator.prepare({:scope => "by_invite_user_id", :id => @d1.id})
+          DigestMailer::MailOrchestrator.prepare({:scope => "by_invite_user_id", :id => @d1.id, :body => 'This email has a body'})
         end
         it { EmailDigest.count.should == 0 }
         it { EmailMessage.count.should == 1 }
@@ -188,7 +188,7 @@ describe DigestMailer::MailOrchestrator do
     
     describe "by_all_users" do
       before do
-        DigestMailer::MailOrchestrator.prepare({:scope => "by_all_users"})
+        DigestMailer::MailOrchestrator.prepare({:scope => "by_all_users", :body => 'This email has a body'})
       end
       it { User.count.should == 7 }
       it { EmailDigest.count.should == 4 }
@@ -202,7 +202,7 @@ describe DigestMailer::MailOrchestrator do
       before do 
         @idea = Factory.create(:idea, :user => @d1, :project => @project)
         @idea2 = Factory.create(:idea, :user => @d2, :project => @project)
-        DigestMailer::MailOrchestrator.prepare({:scope =>'by_all_users_with_idea_on_a_project', :id => @project.id}, ["test2@mail.com"])
+        DigestMailer::MailOrchestrator.prepare({:scope =>'by_all_users_with_idea_on_a_project', :id => @project.id, :body => 'This email has a body.'}, ["test2@mail.com"])
       end
 
       it { @project.id.should > 0 }
@@ -211,13 +211,13 @@ describe DigestMailer::MailOrchestrator do
       it { EmailMessage.count.should == 1 } 
       it { Delayed::Job.count.should == 3
         work_off 
-      }
-    end
+      } 
+    end 
 
     describe "by_project_id" do
       before do 
         Factory.create(:membership, :memberable => @project, :user => @d5) 
-        DigestMailer::MailOrchestrator.prepare({:scope =>'by_project_id', :id => @project.id})
+        DigestMailer::MailOrchestrator.prepare({:scope =>'by_project_id', :id => @project.id, :body => 'This email has a body!'})
       end
       it { @project.users.count == 3 }
       it { EmailDigest.count.should == 0 } #because the scope says to skip user preferences
@@ -228,7 +228,7 @@ describe DigestMailer::MailOrchestrator do
     describe "by_discipline_id" do
       describe "should recognize that discipline 4 has 2 users in it" do
         before do
-          DigestMailer::MailOrchestrator.prepare({:scope =>'by_discipline_id', :id => 4})
+          DigestMailer::MailOrchestrator.prepare({:scope =>'by_discipline_id', :id => 4, :body => 'This email has a body'})
         end
         it { EmailDigest.count.should == 0 } #because the scope says to skip user preferences
         it { EmailMessage.count.should == 1 }
@@ -237,7 +237,7 @@ describe DigestMailer::MailOrchestrator do
 
       describe "should recognize that discipline 2 has 1 user in it" do
         before do
-          DigestMailer::MailOrchestrator.prepare({:scope =>'by_discipline_id', :id => 2})
+          DigestMailer::MailOrchestrator.prepare({:scope =>'by_discipline_id', :id => 2, :body => 'This email has a body'})
         end
         it { EmailDigest.count.should == 0 } #because the scope says to skip user preferences
         it { EmailMessage.count.should == 1 }

@@ -12,9 +12,8 @@ module DigestMailer
     
       # send the message to the queue for delivery
       def send_message
-        Rails.logger.info("RECIPIENT :::> #{recipient}") if recipient.kind_of?(Fixnum)
-        recipient_email = (recipient.kind_of?(Hash)) ? recipient[:email] : recipient.email
-        m = MailDispatcher.generic_message(recipient_email, self.message)
+        Rails.logger.info("BODY::> #{self.message.body}")
+        m = MailDispatcher.generic_message(recipient.email, self.message)
         m.deliver if Rails.env!='test'
       end
   end

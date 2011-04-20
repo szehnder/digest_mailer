@@ -11,7 +11,7 @@ module DigestMailer
       #send the email to all the write-in recipients
       other_recipients.each do |recip|
         if(recip!="")
-          msg = PendingMessage.new({:email => recip}, email_message, Time.now, 'generic_message')
+          msg = PendingMessage.new(NonUserRecipient.new(recip), email_message, Time.now, 'generic_message')
           MailDelayedJobScheduler.enqueue_message(msg)
         end
       end
@@ -72,25 +72,19 @@ module DigestMailer
       when "by_project_id"
         recipients = Project.find(message_params[:id]).users
       when "by_all_users_with_idea_on_a_project"
-        Project.find(message_params[:id]).ideas.find(:all, :select => "DISTINCT user_id").each do |idea|
-          recipients << User.find(idea.user_id)
-        end
+        recipients = User.find(Project.find(message_params[:id]).ideas.find(:all, :select => "DISTINCT user_id").collect{|p| p.user_id})
       when "by_user_array"
         recipients = message_params[:user_recipients]
       when "by_all_users"
         recipients = User.all
       when "by_discipline_id"
-        User.find(:all, :conditions => "discipline_id = #{message_params[:id]}").each do |user|
-          recipients << user.id
-        end
+        recipients = User.find(:all, :conditions => "discipline_id = #{message_params[:id]}")
       when 'by_invite_user_id'
         recipients << message_params[:id]
       when 'by_all_users_with_idea'
-        Idea.find(:all, :select => "DISTINCT user_id").each do |idea|
-          recipients << idea.user_id
-        end
+        recipients = User.find(Idea.find(:all, :select => "DISTINCT user_id").collect{|i| i.user_id })
       end
-      recipients# + message_params[:other_recipients]
+      recipients.uniq
     end
 
     #Determines whether or not this type of email should honor the user's preferred format (meaning 'immediate' or 'digest')
